@@ -8,6 +8,7 @@ use cursive::view::Margins;
 use cursive::views::*;
 // use cursive::views::{Button, Dialog, DummyView, EditView, LinearLayout, ResizedView, TextView};
 // use cursive_async_view::{AsyncState, AsyncView};
+// mod server;
 
 fn main() {
     let mut siv = cursive::default();
@@ -75,6 +76,20 @@ fn register(s: &mut Cursive) {
 
 }
 
+fn check_login(username: &str, password: &str) -> bool {
+    // let mut stream = TcpStream::connect("127.0.0.1:8080").unwrap();
+    // stream.write(format!("{}:{}",
+    //     username, password).as_bytes()).unwrap();
+    // let mut buffer = [0; 1024];
+    // stream.read(&mut buffer).unwrap();
+    // let response = String::from_utf8_lossy(&buffer[..]);
+    // if response == "true" {
+    //     return true;
+    // }
+    // false
+    true
+}
+
 fn submit(s: &mut Cursive) {
     let username = 
         match s.call_on_name("username", |v: &mut EditView| { v.get_content().to_string() }) {
@@ -87,6 +102,10 @@ fn submit(s: &mut Cursive) {
             None => String::from("")
         };
     
+    if check_login(&username, &password) == false {
+        s.add_layer(Dialog::info("Invalid username or password."));
+        return;
+    }
         
     s.pop_layer();
     s.add_layer(TextView::new(format!("{} - {}", username, password)));
