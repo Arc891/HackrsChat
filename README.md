@@ -9,6 +9,7 @@ $ cargo run -p hackrschat
 ```
 
 HackrsChat is a personal-use self-host TUI chat application for you and your friends/community, written in Rust, making use of the Cursive library.
+This chat application will have a privacy-focused approach, with the ability to self-host the server and client, and with good encryption and safety practices, to be sure that your data is safe and secure.
 This project is currently a work in progress, feel free to contribute!
 
 ## Roadmap
