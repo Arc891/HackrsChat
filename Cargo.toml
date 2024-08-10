@@ -5,3 +5,4 @@ edition = "2021"
 
 [dependencies]
 cursive = "0.21"
+cursive-async-view = "0.6.0"
