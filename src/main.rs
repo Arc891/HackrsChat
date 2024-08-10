@@ -107,7 +107,62 @@ fn submit(s: &mut Cursive) {
         return;
     }
         
-    s.pop_layer();
-    s.add_layer(TextView::new(format!("{} - {}", username, password)));
+    // s.pop_layer();
+    // s.add_layer(Dialog::info(format!("{} - {}", username, password)));
+    main_menu(s);
     // s.quit();
+}
+
+
+fn main_menu(s: &mut Cursive) {
+    s.pop_layer();
+    // I'm going to make a view containing two subviews:
+    // - a list of active chats
+    // - a terminal-like view for sending commands to the server
+    // They will make use of more of the screen, and will be both visible at the same time.
+    let terminal = LinearLayout::vertical()
+        .child(TextView::new("Output goes here.")
+            .with_name("output")
+            .scrollable())
+        .child(EditView::new()
+            .filler(" ")
+            .on_submit(terminal_command)
+            .with_name("input")
+            .fixed_width(80));
+
+    let chats = vec![("Chat 1", "Chat 1 description"),
+        ("Chat 2", "Chat 2 description"),
+        ("Chat 3", "Chat 3 description")];
+    let select = SelectView::new()
+        .with_all(std::iter::repeat(chats).take(10).flatten())
+        .on_submit(|s, item: &str| s.add_layer(Dialog::info(format!("Selected: {}", item))));
+
+    let main_menu = LinearLayout::horizontal()
+        .child(select)
+        .child(terminal);
+
+    s.add_layer(Dialog::around(main_menu)
+        .title("Main menu")
+        .button("Logout", login_menu)
+        .button("Quit", Cursive::quit));
+
+}
+
+fn terminal_command(s: &mut Cursive, command: &str) {
+    let output = match command {
+        "help" => "Available commands: help, quit, list, join, create",
+        "quit" => "Goodbye!",
+        "list" => "Available chats: Chat 1, Chat 2, Chat 3",
+        "join" => "Joining chat...",
+        "create" => "Creating chat...",
+        _ => "Unknown command. Type 'help' for a list of commands."
+    };
+
+    s.call_on_name("input", |v: &mut EditView| {
+        v.set_content("");
+    });
+
+    s.call_on_name("output", |v: &mut TextView| {
+        v.append(format!("\n{}", output));
+    });
 }
