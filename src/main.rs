@@ -13,8 +13,11 @@ use cursive::views::*;
 fn main() {
     let mut siv = cursive::default();
 
-    let view = ResizedView::with_fixed_size((80, 15), 
-        Dialog::text("Welcome!")
+    // Read logo from assets/logo_full.txt
+    let logo: &str = include_str!("../assets/logo_full.txt");
+
+    let view = ResizedView::with_fixed_size((64, 11), 
+        Dialog::text(logo)
             .button("GO", login_menu));
     
     siv.add_layer(view);   
@@ -45,13 +48,13 @@ fn login(s: &mut Cursive) {
     let entries = LinearLayout::vertical()
         .child(EditView::new()
             .filler(" ")
-            // .on_submit(submit)
+            .on_submit(submit_with_arg)
             .with_name("username")
             .fixed_width(15))
         .child(EditView::new()
             .secret()
             .filler(" ")
-            // .on_submit(submit)
+            .on_submit(submit_with_arg)
             .with_name("password")
             .fixed_width(15));
 
@@ -87,7 +90,15 @@ fn check_login(username: &str, password: &str) -> bool {
     //     return true;
     // }
     // false
-    true
+    if username != "" && password != "" {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+fn submit_with_arg(s: &mut Cursive, _: &str) {
+    submit(s);
 }
 
 fn submit(s: &mut Cursive) {
