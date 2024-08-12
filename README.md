@@ -12,6 +12,12 @@ HackrsChat is a personal-use self-host TUI chat application for you and your fri
 This chat application will have a privacy-focused approach, with the ability to self-host the server and client, and with good encryption and safety practices, to be sure that your data is safe and secure.
 This project is currently a work in progress, feel free to contribute!
 
+## Demo
+
+<!-- ![HackrsChat Demo](examples/Demo.mp4) -->
+
+<video src="examples/Demo.mp4" width="576" height="324" controls></video>
+
 ## Roadmap
 
 - [ ] Basic TUI layout
