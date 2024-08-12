@@ -14,9 +14,7 @@ This project is currently a work in progress, feel free to contribute!
 
 ## Demo
 
-<!-- ![HackrsChat Demo](examples/Demo.mp4) -->
-
-<video src="examples/Demo.mp4" width="576" height="324" controls></video>
+https://github.com/user-attachments/assets/3b5eb4bd-1c61-4a77-a2fc-67e4975f20a7
 
 ## Roadmap
 
