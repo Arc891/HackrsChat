@@ -196,11 +196,6 @@ fn main_menu(s: &mut Cursive) {
     let terminal_prefix = TextView::new("$ ")
         .fixed_width(2);
 
-    // let terminal_output = TextView::new("Output goes here.")
-    //     .with_name("output")
-    //     .scrollable()
-    //     .fixed_height(20);
-
     let terminal = LinearLayout::vertical()
         .child(TextView::new("-- Terminal --")
             .with_name("output")
@@ -209,13 +204,6 @@ fn main_menu(s: &mut Cursive) {
         .child(LinearLayout::horizontal()
             .child(terminal_prefix)
             .child(terminal_input));
-        
-        
-        // .child(EditView::new()
-        //     .filler(" ")
-        //     .on_submit(terminal_command)
-        //     .with_name("input")
-        //     .fixed_width(80));
 
     let chats = vec![("Chat 1", "Chat 1 description"),
         ("Chat 2", "Chat 2 description"),
@@ -248,7 +236,7 @@ fn terminal_command(s: &mut Cursive, command: &str) {
                 |v: &mut SelectView<&str>| { v.iter().map(|(s, _)| String::from(s)).collect::<Vec<String>>()
             });
             match chats {
-                Some(c) => &format!("Available chats: -{:?}-", c),
+                Some(c) => &format!("Available chats: {:?}", c),
                 None => "No chats available."
             }
         },
