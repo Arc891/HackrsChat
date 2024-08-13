@@ -22,13 +22,15 @@ https://github.com/user-attachments/assets/3b5eb4bd-1c61-4a77-a2fc-67e4975f20a7
   - [x] Welcome screen
   - [x] ^ With logo
   - [x] Login screen
-  - [ ] Registration screen
+  - [x] Registration screen
   - [ ] Main menu
     - [x] Chat list
     - [x] Command box
-- [ ] Basic chat functionality
-- [ ] User authentication
-- [ ] User registration
-- [ ] Basic chat commands
-- [ ] Usable API for external applications
+  - [ ] Chat layout
+- [ ] Actual server integration
+  - [ ] Basic chat functionality
+  - [ ] User authentication
+  - [ ] User registration
+  - [ ] Basic chat commands
+  - [ ] Usable API for external applications
 - [ ] More to come...
