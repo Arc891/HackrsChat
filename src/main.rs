@@ -229,7 +229,7 @@ fn main_menu(s: &mut Cursive) {
 fn terminal_command(s: &mut Cursive, command: &str) {
     let output = 
         match command {
-        "h"|"help" => { "Available commands: help, quit, list, join, create" },
+        "h"|"help" => { "Available commands: [h]elp, [q]uit, [l]ist, [cl]ear, join, create" },
         "q"|"quit" => { s.quit(); "Goodbye!" },
         "l"|"list" => { 
             let chats = s.call_on_name("chats", 
@@ -240,7 +240,10 @@ fn terminal_command(s: &mut Cursive, command: &str) {
                 None => "No chats available."
             }
         },
-        "cl"|"clear" => { s.call_on_name("output", |v: &mut TextView| { v.set_content(""); }); "Output cleared." },
+        "cl"|"clear" => { 
+            s.call_on_name("output", |v: &mut TextView| { v.set_content(""); });
+            "Output cleared."
+        },
         "join" => { "Joining chat..." },
         "create" => { "Creating chat..." },
         _ => { "Unknown command. Type 'help' for a list of commands." }
