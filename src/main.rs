@@ -187,26 +187,47 @@ fn submit_login(s: &mut Cursive) {
 
 fn main_menu(s: &mut Cursive) {
     s.pop_layer();
+    let terminal_input = EditView::new()
+        .filler(" ")
+        .on_submit(terminal_command)
+        .with_name("input")
+        .fixed_width(80);
+
+    let terminal_prefix = TextView::new("$ ")
+        .fixed_width(2);
+
+    // let terminal_output = TextView::new("Output goes here.")
+    //     .with_name("output")
+    //     .scrollable()
+    //     .fixed_height(20);
+
     let terminal = LinearLayout::vertical()
-        .child(TextView::new("Output goes here.")
+        .child(TextView::new("-- Terminal --")
             .with_name("output")
-            .scrollable())
-        .child(EditView::new()
-            .filler(" ")
-            .on_submit(terminal_command)
-            .with_name("input")
-            .fixed_width(80));
+            .scrollable()
+            .fixed_height(20))
+        .child(LinearLayout::horizontal()
+            .child(terminal_prefix)
+            .child(terminal_input));
+        
+        
+        // .child(EditView::new()
+        //     .filler(" ")
+        //     .on_submit(terminal_command)
+        //     .with_name("input")
+        //     .fixed_width(80));
 
     let chats = vec![("Chat 1", "Chat 1 description"),
         ("Chat 2", "Chat 2 description"),
         ("Chat 3", "Chat 3 description")];
     let select = SelectView::new()
-        .with_all(std::iter::repeat(chats).take(5).flatten())
+        .with_all(std::iter::repeat(chats).take(1).flatten())
         .on_submit(|s, item: &str| s.add_layer(Dialog::info(format!("Selected: {}", item))))
         .with_name("chats");
 
     let main_menu = LinearLayout::horizontal()
         .child(select)
+        .child(DummyView)
         .child(terminal);
 
     s.add_layer(Dialog::around(main_menu)
@@ -220,15 +241,18 @@ fn main_menu(s: &mut Cursive) {
 fn terminal_command(s: &mut Cursive, command: &str) {
     let output = 
         match command {
-        "help" => { "Available commands: help, quit, list, join, create" },
-        "quit" => { s.quit(); "Goodbye!" },
-        "list" => { 
+        "h"|"help" => { "Available commands: help, quit, list, join, create" },
+        "q"|"quit" => { s.quit(); "Goodbye!" },
+        "l"|"list" => { 
             let chats = s.call_on_name("chats", 
-                |v: &mut SelectView<String>| { v.iter().map(|(s, _)| String::from(s)).collect::<Vec<String>>()
-            }).unwrap();
-            &format!("Available chats: -{:?}-", chats) 
-            // "Available chats: "
+                |v: &mut SelectView<&str>| { v.iter().map(|(s, _)| String::from(s)).collect::<Vec<String>>()
+            });
+            match chats {
+                Some(c) => &format!("Available chats: -{:?}-", c),
+                None => "No chats available."
+            }
         },
+        "cl"|"clear" => { s.call_on_name("output", |v: &mut TextView| { v.set_content(""); }); "Output cleared." },
         "join" => { "Joining chat..." },
         "create" => { "Creating chat..." },
         _ => { "Unknown command. Type 'help' for a list of commands." }
@@ -239,6 +263,10 @@ fn terminal_command(s: &mut Cursive, command: &str) {
     });
 
     s.call_on_name("output", |v: &mut TextView| {
-        v.append(format!("\n{}", output));
+        let pre = match v.get_content().into() {
+            Some(s) => { if s.is_empty() { "" } else { "\n" } },
+            None => ""
+        };
+        v.append(format!("{}$ {}\n{}", pre, command, output));
     });
 }
