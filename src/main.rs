@@ -48,13 +48,13 @@ fn login(s: &mut Cursive) {
     let entries = LinearLayout::vertical()
         .child(EditView::new()
             .filler(" ")
-            .on_submit(submit_with_arg)
+            .on_submit(submit_login_with_arg)
             .with_name("username")
             .fixed_width(15))
         .child(EditView::new()
             .secret()
             .filler(" ")
-            .on_submit(submit_with_arg)
+            .on_submit(submit_login_with_arg)
             .with_name("password")
             .fixed_width(15));
 
@@ -71,25 +71,88 @@ fn login(s: &mut Cursive) {
         .title("Login")
         .padding(Margins::lr(3, 3))
         .button("Back", login_menu)
-        .button("Submit", submit));
+        .button("Register", register)
+        .button("Submit", submit_login));
 }
 
 fn register(s: &mut Cursive) {
     s.pop_layer();
+    
+    let labels = LinearLayout::vertical()
+        .child(TextView::new("Username: "))
+        .child(TextView::new("Password: "))
+        .child(TextView::new("Confirm password: ")); 
+    
+    let entries = LinearLayout::vertical()
+        .child(EditView::new()
+            .filler(" ")
+            .on_submit(submit_register_with_arg)
+            .with_name("username")
+            .fixed_width(15))
+        .child(EditView::new()
+            .secret()
+            .filler(" ")
+            .on_submit(submit_register_with_arg)
+            .with_name("password")
+            .fixed_width(15))
+        .child(EditView::new()
+            .secret()
+            .filler(" ")
+            .on_submit(submit_register_with_arg)
+            .with_name("password_confirm")
+            .fixed_width(15));
 
+        let register_view = LinearLayout::horizontal()
+            .child(labels)
+            .child(entries);
+
+    s.add_layer(Dialog::around(register_view)
+        .title("Register")
+        .padding(Margins::lr(3, 3))
+        .button("Back", login_menu)
+        .button("Login", login)
+        .button("Submit", submit_register));
 }
 
+fn check_register(username: &str, password: &str, password_confirm: &str) -> bool {
+    if username == "" { return false; }
+    if password == password_confirm && password != "" { return true; }
+    false 
+}
+
+fn submit_register_with_arg(s: &mut Cursive, _: &str) {
+    submit_register(s);
+}
+
+fn submit_register(s: &mut Cursive) {
+    let username = 
+        match s.call_on_name("username", |v: &mut EditView| { v.get_content().to_string() }) {
+            Some(s) => s,
+            None => String::from("")
+        };
+    let password = 
+        match s.call_on_name("password", |v: &mut EditView| { v.get_content().to_string() }) {
+            Some(s) => s,
+            None => String::from("")
+        };
+    let password_confirm = 
+        match s.call_on_name("password_confirm", |v: &mut EditView| { v.get_content().to_string() }) {
+            Some(s) => s,
+            None => String::from("")
+        };
+
+    if check_register(&username, &password, &password_confirm) == false {
+        s.add_layer(Dialog::info("Invalid username or password."));
+        return;
+    }
+
+    main_menu(s);
+}
+
+
+
+
 fn check_login(username: &str, password: &str) -> bool {
-    // let mut stream = TcpStream::connect("127.0.0.1:8080").unwrap();
-    // stream.write(format!("{}:{}",
-    //     username, password).as_bytes()).unwrap();
-    // let mut buffer = [0; 1024];
-    // stream.read(&mut buffer).unwrap();
-    // let response = String::from_utf8_lossy(&buffer[..]);
-    // if response == "true" {
-    //     return true;
-    // }
-    // false
     if username != "" && password != "" {
         return true;
     } else {
@@ -97,11 +160,11 @@ fn check_login(username: &str, password: &str) -> bool {
     }
 }
 
-fn submit_with_arg(s: &mut Cursive, _: &str) {
-    submit(s);
+fn submit_login_with_arg(s: &mut Cursive, _: &str) {
+    submit_login(s);
 }
 
-fn submit(s: &mut Cursive) {
+fn submit_login(s: &mut Cursive) {
     let username = 
         match s.call_on_name("username", |v: &mut EditView| { v.get_content().to_string() }) {
             Some(s) => s,
@@ -118,19 +181,12 @@ fn submit(s: &mut Cursive) {
         return;
     }
         
-    // s.pop_layer();
-    // s.add_layer(Dialog::info(format!("{} - {}", username, password)));
     main_menu(s);
-    // s.quit();
 }
 
 
 fn main_menu(s: &mut Cursive) {
     s.pop_layer();
-    // I'm going to make a view containing two subviews:
-    // - a list of active chats
-    // - a terminal-like view for sending commands to the server
-    // They will make use of more of the screen, and will be both visible at the same time.
     let terminal = LinearLayout::vertical()
         .child(TextView::new("Output goes here.")
             .with_name("output")
