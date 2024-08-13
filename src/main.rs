@@ -145,8 +145,9 @@ fn main_menu(s: &mut Cursive) {
         ("Chat 2", "Chat 2 description"),
         ("Chat 3", "Chat 3 description")];
     let select = SelectView::new()
-        .with_all(std::iter::repeat(chats).take(10).flatten())
-        .on_submit(|s, item: &str| s.add_layer(Dialog::info(format!("Selected: {}", item))));
+        .with_all(std::iter::repeat(chats).take(5).flatten())
+        .on_submit(|s, item: &str| s.add_layer(Dialog::info(format!("Selected: {}", item))))
+        .with_name("chats");
 
     let main_menu = LinearLayout::horizontal()
         .child(select)
@@ -159,14 +160,22 @@ fn main_menu(s: &mut Cursive) {
 
 }
 
+
 fn terminal_command(s: &mut Cursive, command: &str) {
-    let output = match command {
-        "help" => "Available commands: help, quit, list, join, create",
-        "quit" => "Goodbye!",
-        "list" => "Available chats: Chat 1, Chat 2, Chat 3",
-        "join" => "Joining chat...",
-        "create" => "Creating chat...",
-        _ => "Unknown command. Type 'help' for a list of commands."
+    let output = 
+        match command {
+        "help" => { "Available commands: help, quit, list, join, create" },
+        "quit" => { s.quit(); "Goodbye!" },
+        "list" => { 
+            let chats = s.call_on_name("chats", 
+                |v: &mut SelectView<String>| { v.iter().map(|(s, _)| String::from(s)).collect::<Vec<String>>()
+            }).unwrap();
+            &format!("Available chats: -{:?}-", chats) 
+            // "Available chats: "
+        },
+        "join" => { "Joining chat..." },
+        "create" => { "Creating chat..." },
+        _ => { "Unknown command. Type 'help' for a list of commands." }
     };
 
     s.call_on_name("input", |v: &mut EditView| {
