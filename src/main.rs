@@ -6,6 +6,7 @@ use cursive::Cursive;
 use cursive::traits::*;
 use cursive::view::Margins;
 use cursive::views::*;
+use cursive::align::HAlign;
 // use cursive::views::{Button, Dialog, DummyView, EditView, LinearLayout, ResizedView, TextView};
 // use cursive_async_view::{AsyncState, AsyncView};
 // mod server;
@@ -26,16 +27,34 @@ fn main() {
 }
 
 fn login_menu(s: &mut Cursive) {  
-  // let buttons = LinearLayout::horizontal()
-  //   .child(Button::new("Login", login))
-  //   .child(DummyView)
-  //   .child(Button::new("Register", register));
-  
   s.pop_layer();
-  s.add_layer(Dialog::text("Please login or register.")
+
+  let logo: &str = include_str!("../assets/logo_full.txt");
+
+  let logo_text = TextView::new(logo)
+    .h_align(HAlign::Center)
+    .scrollable();
+
+  let info_text = TextView::new("Please login or register.")
+    .h_align(HAlign::Center)
+    .scrollable();
+
+  let logo_view = Dialog::around(LinearLayout::vertical()
+      .child(logo_text)
+      .child(DummyView)
+      .child(info_text))
     .title("Welcome")
+    .padding(Margins::lr(3, 3))
     .button("Login", login)
-    .button("Register", register));
+    .button("Register", register)
+    .button("Quit", Cursive::quit);
+
+  s.add_layer(logo_view);
+  
+  // s.add_layer(Dialog::text("Please login or register.")
+  //   .title("Welcome")
+  //   .button("Login", login)
+  //   .button("Register", register));
 }
 
 fn login(s: &mut Cursive) { 
@@ -289,7 +308,12 @@ fn terminal_command(s: &mut Cursive, command: &str) {
       }
     },
     "cl"|"clear" => { 
-      s.call_on_name("output", |v: &mut TextView| { v.set_content("-- Terminal --\n"); });
+      let content = match s.call_on_name("output", |v: &mut TextView| { v.get_content().to_owned().into_source() }) {
+        // Only grab the first line of the content
+        Some(c) => format!("{}\n", c.lines().next().unwrap().to_string()),
+        None => String::from("")
+      };
+      s.call_on_name("output", |v: &mut TextView| { v.set_content(content); });
       ""
     },
     "join" => { "Joining chat..." },
