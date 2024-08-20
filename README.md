@@ -23,10 +23,13 @@ https://github.com/user-attachments/assets/3b5eb4bd-1c61-4a77-a2fc-67e4975f20a7
   - [x] ^ With logo
   - [x] Login screen
   - [x] Registration screen
-  - [ ] Main menu
+  - [x] Main menu
     - [x] Chat list
-    - [x] Command box
+    - [x] Terminal/command box
   - [ ] Chat layout
+    - [ ] Chat messages
+    - [x] Chat input
+    - [x] Chat commands (currently use terminal commands)
 - [ ] Actual server integration
   - [ ] Basic chat functionality
   - [ ] User authentication
