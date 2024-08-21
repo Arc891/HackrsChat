@@ -1,13 +1,13 @@
-// use std::thread;
-// use std::time::{Instant, Duration};
-// use cursive::logger::log;
-// use cursive::style::gradient::Linear;
+use cursive::theme::ColorStyle;
+use cursive::theme::PaletteStyle;
 use cursive::Cursive;
 use cursive::traits::*;
 use cursive::view::Margins;
 use cursive::views::*;
 use cursive::align::HAlign;
-// use cursive::views::{Button, Dialog, DummyView, EditView, LinearLayout, ResizedView, TextView};
+// use std::time::{Instant, Duration};
+// use cursive::logger::log;
+// use cursive::style::gradient::Linear;
 // use cursive_async_view::{AsyncState, AsyncView};
 // mod server;
 
@@ -235,9 +235,12 @@ fn main_menu(s: &mut Cursive) {
     .on_submit(|s, item: &str| chat(s, item))
     .with_name("chats");
 
+  let horizontal_line = std::iter::repeat(String::from("|\n")).take(21).collect::<String>();
+
   let main_menu = LinearLayout::horizontal()
     .child(select)
     .child(DummyView)
+    .child(TextView::new(horizontal_line))
     .child(terminal);
 
   s.add_layer(Dialog::around(main_menu)
@@ -251,6 +254,7 @@ fn chat(s: &mut Cursive, chat_title: &str) {
   s.pop_layer();
   let chat_input = EditView::new()
     .filler(" ")
+    // .style(ColorStyle::tertiary())
     .on_submit(chat_message)
     .with_name("input")
     .fixed_width(80);
@@ -294,29 +298,61 @@ fn chat_message(s: &mut Cursive, message: &str) {
 }
 
 fn terminal_command(s: &mut Cursive, command: &str) {
-  let output = 
-    match command {
+  let output = match command {
     "h"|"help" => { "Available commands: [h]elp, [q]uit, [l]ist, [cl]ear, join, create" },
     "q"|"quit" => { s.quit(); "Goodbye!" },
     "l"|"list" => { 
-      let chats = s.call_on_name("chats", 
-        |v: &mut SelectView<&str>| { v.iter().map(|(s, _)| String::from(s)).collect::<Vec<String>>()
-      });
-      match chats {
-        Some(c) => &format!("Available chats: {:?}", c),
+      match s.call_on_name("chats", 
+        |v: &mut SelectView<&str>| { 
+          v.iter()
+            .map( |(s, _)| String::from(s) )
+            .collect::<Vec<String>>()
+      }) {
+        Some(c) => &format!(
+          "Available chats: {}", 
+            c.iter()
+              .map(|s| s.as_str())
+              .collect::<Vec<&str>>()
+              .join(", ")),
         None => "No chats available."
       }
     },
     "cl"|"clear" => { 
-      let content = match s.call_on_name("output", |v: &mut TextView| { v.get_content().to_owned().into_source() }) {
-        // Only grab the first line of the content
-        Some(c) => format!("{}\n", c.lines().next().unwrap().to_string()),
-        None => String::from("")
+      let content = match s.call_on_name("output", |v: &mut TextView| { 
+        v.get_content().to_owned().into_source() }) {
+          // Only grab the first line of the content
+          Some(c) => format!("{}\n", c.lines().next().unwrap().to_string()),
+          None => String::from("")
       };
       s.call_on_name("output", |v: &mut TextView| { v.set_content(content); });
       ""
     },
-    "join" => { "Joining chat..." },
+    "join" => { "Please enter a chat name to join." },
+    cmd if cmd.starts_with("join ") => {
+      let param = &cmd[5..];
+      if param == "" {
+        "Invalid chat name."
+      } else {
+        let chat_name = match s.call_on_name("chats", 
+          |v: &mut SelectView<&str>| { 
+            match v.iter().find(move |(s, _)| *s == param) {
+              Some((s, d)) => (String::from(s), String::from(*d)),
+              None => ("".to_string(), "".to_string())
+            }
+        }) {
+          Some((_, d)) => String::from(d),
+          None => "".to_string()
+        };
+        
+        if chat_name == "" {
+          &format!("Chat '{}' not found.", param)
+        } else {
+          chat(s, chat_name.as_str());
+          // &format!("Joining chat: {}", param)
+          ""
+        }
+      }
+    },
     "create" => { "Creating chat..." },
     _ => { "Unknown command. Type 'help' for a list of commands." }
   };
