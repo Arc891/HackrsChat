@@ -1,15 +1,14 @@
-use cursive::theme::ColorStyle;
-use cursive::theme::PaletteStyle;
 use cursive::Cursive;
 use cursive::traits::*;
 use cursive::view::Margins;
 use cursive::views::*;
 use cursive::align::HAlign;
+// use cursive::theme::ColorStyle;
+// use cursive::theme::PaletteStyle;
 // use std::time::{Instant, Duration};
 // use cursive::logger::log;
 // use cursive::style::gradient::Linear;
 // use cursive_async_view::{AsyncState, AsyncView};
-// mod server;
 
 fn main() {
   let mut siv = cursive::default();
