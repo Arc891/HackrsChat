@@ -14,23 +14,23 @@ This project is currently a work in progress, feel free to contribute!
 
 ## Demo
 
-https://github.com/user-attachments/assets/3b5eb4bd-1c61-4a77-a2fc-67e4975f20a7
+https://github.com/user-attachments/assets/875b51e0-e4cb-4c58-8fda-016139f2115f
 
 ## Roadmap
 
 - [ ] Basic TUI layout
-  - [x] Welcome screen
-  - [x] ^ With logo
+  - [x] Welcome screen with logo
   - [x] Login screen
   - [x] Registration screen
   - [x] Main menu
     - [x] Chat list
     - [x] Terminal/command box
   - [ ] Chat layout
-    - [ ] Chat messages
+    - [ ] Messages position & style
     - [x] Chat input
     - [x] Chat commands (currently use terminal commands)
 - [ ] Actual server integration
+  - [x] Echo server
   - [ ] Basic chat functionality
   - [ ] User authentication
   - [ ] User registration
