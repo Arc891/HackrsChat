@@ -10,13 +10,21 @@ use cursive::align::HAlign;
 // use cursive::style::gradient::Linear;
 // use cursive_async_view::{AsyncState, AsyncView};
 
+const T_HEIGHT: usize = 20;
+const T_WIDTH: usize = 80;
+
+const LOGO_HEIGHT: usize = 11;
+const LOGO_WIDTH: usize = 64;
+
+const ENTRY_WIDTH: usize = 15;
+
 fn main() {
   let mut siv = cursive::default();
 
   // Read logo from assets/logo_full.txt
   let logo: &str = include_str!("../assets/logo_full.txt");
 
-  let view = ResizedView::with_fixed_size((64, 11), 
+  let view = ResizedView::with_fixed_size((LOGO_WIDTH, LOGO_HEIGHT), 
     Dialog::text(logo)
       .button("GO", login_menu));
   
@@ -68,13 +76,13 @@ fn login(s: &mut Cursive) {
       .filler(" ")
       .on_submit(submit_login_with_arg)
       .with_name("username")
-      .fixed_width(15))
+      .fixed_width(ENTRY_WIDTH))
     .child(EditView::new()
       .secret()
       .filler(" ")
       .on_submit(submit_login_with_arg)
       .with_name("password")
-      .fixed_width(15));
+      .fixed_width(ENTRY_WIDTH));
 
   let login_view = LinearLayout::horizontal()
     .child(labels)
@@ -107,19 +115,19 @@ fn register(s: &mut Cursive) {
       .filler(" ")
       .on_submit(submit_register_with_arg)
       .with_name("username")
-      .fixed_width(15))
+      .fixed_width(ENTRY_WIDTH))
     .child(EditView::new()
       .secret()
       .filler(" ")
       .on_submit(submit_register_with_arg)
       .with_name("password")
-      .fixed_width(15))
+      .fixed_width(ENTRY_WIDTH))
     .child(EditView::new()
       .secret()
       .filler(" ")
       .on_submit(submit_register_with_arg)
       .with_name("password_confirm")
-      .fixed_width(15));
+      .fixed_width(ENTRY_WIDTH));
 
     let register_view = LinearLayout::horizontal()
       .child(labels)
@@ -211,7 +219,7 @@ fn main_menu(s: &mut Cursive) {
     .filler(" ")
     .on_submit(terminal_command)
     .with_name("input")
-    .fixed_width(80);
+    .fixed_width(T_WIDTH);
 
   let terminal_prefix = TextView::new("$ ")
     .fixed_width(2);
@@ -220,7 +228,7 @@ fn main_menu(s: &mut Cursive) {
     .child(TextView::new("-- Terminal --\n")
       .with_name("output")
       .scrollable()
-      .fixed_height(20))
+      .fixed_height(T_HEIGHT))
     .child(LinearLayout::horizontal()
       .child(terminal_prefix)
       .child(terminal_input));
@@ -234,7 +242,7 @@ fn main_menu(s: &mut Cursive) {
     .on_submit(|s, item: &str| chat(s, item))
     .with_name("chats");
 
-  let horizontal_line = std::iter::repeat(String::from("|\n")).take(21).collect::<String>();
+  let horizontal_line = std::iter::repeat(String::from("|\n")).take(T_HEIGHT+1).collect::<String>();
 
   let main_menu = LinearLayout::horizontal()
     .child(select)
@@ -256,7 +264,7 @@ fn chat(s: &mut Cursive, chat_title: &str) {
     // .style(ColorStyle::tertiary())
     .on_submit(chat_message)
     .with_name("input")
-    .fixed_width(80);
+    .fixed_width(T_WIDTH);
 
   let chat_prefix = TextView::new("> ")
     .fixed_width(2);
@@ -265,7 +273,7 @@ fn chat(s: &mut Cursive, chat_title: &str) {
     .child(TextView::new(format!("-- {chat_title} --\n"))
       .with_name("output")
       .scrollable()
-      .fixed_height(20))
+      .fixed_height(T_HEIGHT))
     .child(LinearLayout::horizontal()
       .child(chat_prefix)
       .child(chat_input));
