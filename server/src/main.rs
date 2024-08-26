@@ -57,31 +57,32 @@ async fn main() -> Result<()> {
 mod tests {
     use super::*;
 
-    #[tokio::test]
-    async fn add_user() {
-        let db = db::Database::new(dotenv::var("DATABASE_URL").unwrap().as_str()).await.unwrap();
-        assert!(db.check_user_exists("test").await.unwrap() == false, "User already exists in database.");
-        let user = db::User::new("test".to_string(), "test".to_string());
-        db.create_user(user).await.unwrap();
+    async fn setup() -> Result<db::Database> {
+        let db_url = dotenv::var("DATABASE_URL").unwrap();
+        let db = db::Database::new(&db_url).await?;
+        Ok(db)
     }
 
     #[tokio::test]
-    async fn check_and_get_user() {
-        let db = db::Database::new(dotenv::var("DATABASE_URL").unwrap().as_str()).await.unwrap();
-        let exists = db.check_user_exists("test").await.unwrap();
-        assert_eq!(exists, true, "User does not exist in database.");
+    async fn add_and_check_and_delete_user() {
+        let db = setup().await.unwrap();
+        assert!(db.check_user_exists("test").await.unwrap() == false, "User already exists in database.");
+
+        let user = db::User::new("test".to_string(), "test".to_string());
+        db.create_user(&user).await.unwrap();
+        assert!(db.check_user_exists("test").await.unwrap() == true, "User does not exist in database.");
+
         let db_user = db.get_user_by_username("test").await.unwrap();
+        assert_ne!(db_user.id, -1, "User id is -1.");
         assert_eq!(db_user.username, "test", "Usernames do not match.");
         assert_eq!(db_user.password_hash, "test", "Password hashes do not match.");
+        assert_eq!(db_user.created_at, db_user.last_online, "User created_at and last_online do not match.");
         assert_eq!(db_user.status, db::UserStatus::Offline, "User status is not offline.");
         assert_eq!(db_user.bio, None, "User bio is not None.");
-    }
 
-    #[tokio::test]
-    async fn delete_user() {
-        let db = db::Database::new(dotenv::var("DATABASE_URL").unwrap().as_str()).await.unwrap();
-        let db_user = db.get_user_by_username("test").await.unwrap();
         db.delete_user(db_user).await.unwrap();
+        assert!(db.check_user_exists("test").await.unwrap() == false, "User still exists in database.");
+
     }
 
 }
