@@ -1,6 +1,8 @@
 use sqlx::types::time;
 
-#[derive(Debug, sqlx::Type)]
+#[allow(dead_code)]
+
+#[derive(Debug, PartialEq, Eq, sqlx::Type)]
 #[sqlx(type_name = "userstatus")]
 pub enum UserStatus {
     Online,
@@ -11,6 +13,16 @@ pub enum UserStatus {
 impl From<()> for UserStatus {
     fn from(_: ()) -> Self {
         UserStatus::Offline
+    }
+}
+
+impl std::fmt::Display for UserStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            UserStatus::Away  => write!(f, "Away"),
+            UserStatus::Online => write!(f, "Online"),
+            UserStatus::Offline => write!(f, "Offline"),
+        }
     }
 }
 
@@ -25,22 +37,22 @@ pub struct User {
     pub bio: Option<String>,
 }
 
-#[derive(Debug, sqlx::FromRow)]
-pub struct UserLogin {
-    id: i32,
-    username: String,
-    password_hash: String,
-}
+// #[derive(Debug, sqlx::FromRow)]
+// pub struct UserLogin {
+//     id: i32,
+//     username: String,
+//     password_hash: String,
+// }
 
-#[derive(Debug, sqlx::FromRow)]
-pub struct UserProfile {
-    id: i32,
-    username: String,
-    bio: Option<String>,
-    created_at: time::OffsetDateTime,
-    last_online: time::OffsetDateTime,
-    status: UserStatus,
-}
+// #[derive(Debug, sqlx::FromRow)]
+// pub struct UserProfile {
+//     id: i32,
+//     username: String,
+//     bio: Option<String>,
+//     created_at: time::OffsetDateTime,
+//     last_online: time::OffsetDateTime,
+//     status: UserStatus,
+// }
 
 impl User {
     pub fn new(username: String, password_hash: String) -> Self {
@@ -54,16 +66,61 @@ impl User {
             bio: None,
         }
     }
-    
-    pub fn get_id(&self) -> i32 {
-        self.id
+
+    pub fn created_at_rank(&self) -> &str {
+        let now = time::OffsetDateTime::now_utc();
+        let duration = (now - self.created_at).whole_days();
+
+        if duration < 1 {
+            "Newbie"
+        } else if duration < 7 {
+            "Script Kiddie"
+        } else if duration < 14 {
+            "Java Enthousiast"
+        } else if duration < 30 {
+            "TCP/IP Stacked"
+        } else if duration < 90 {
+            "Network Ninja"
+        } else if duration < 365 {
+            "Zero-Day Hunter"
+        } else if duration < 365 * 2 {
+            "Kernel Developer"
+        } 
+        else {
+            "Root Admin"
+        }
+
+        // Cool names to save:
+        // Kernel Developer
+        // Zero-Day Specialist
+        // Anonymous Member - think about options
+
+        // Could also use network layers as a reference    
     }
-    
-    pub fn set_id(&mut self, id: i32) {
-        self.id = id;
+
+    pub fn format_last_online(&self) -> String {
+        let now = time::OffsetDateTime::now_utc();
+        let duration = (now - self.last_online).whole_minutes();
+        
+        if duration < 1 {
+            "Online".to_string()
+        } else if duration < 60 {
+            format!("Last online: {} minutes ago", duration)
+        } else if duration < 1440 {
+            format!("Last online: {} hours ago", duration / 60)
+        } else {
+            format!("Last online: {} days ago", duration / 1440)
+        }
     }
-    
-    pub fn get_username(&self) -> &str {
-        &self.username
+
+    pub fn display_info(&self) -> String {
+        format!(
+            "User: {}\nBio: {}\nRank: {}\nLast Online: {}\nStatus: {:?}",
+            self.username,
+            self.bio.as_deref().unwrap_or("No bio"),
+            self.created_at_rank(),
+            self.format_last_online(),
+            self.status
+        )
     }
 }
