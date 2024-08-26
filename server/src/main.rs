@@ -55,28 +55,33 @@ async fn main() -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use db::user;
-
     use super::*;
 
     #[tokio::test]
-    async fn test_add_user() {
+    async fn add_user() {
         let db = db::Database::new(dotenv::var("DATABASE_URL").unwrap().as_str()).await.unwrap();
+        assert!(db.check_user_exists("test").await.unwrap() == false, "User already exists in database.");
         let user = db::User::new("test".to_string(), "test".to_string());
         db.create_user(user).await.unwrap();
     }
 
-    // #[tokio::test]
-    // async fn test_delete_user() {
-    //     let db = db::Database::new(dotenv::var("DATABASE_URL").unwrap().as_str()).await.unwrap();
-    //     db.delete_user()
-    // }
+    #[tokio::test]
+    async fn check_and_get_user() {
+        let db = db::Database::new(dotenv::var("DATABASE_URL").unwrap().as_str()).await.unwrap();
+        let exists = db.check_user_exists("test").await.unwrap();
+        assert_eq!(exists, true, "User does not exist in database.");
+        let db_user = db.get_user_by_username("test").await.unwrap();
+        assert_eq!(db_user.username, "test", "Usernames do not match.");
+        assert_eq!(db_user.password_hash, "test", "Password hashes do not match.");
+        assert_eq!(db_user.status, db::UserStatus::Offline, "User status is not offline.");
+        assert_eq!(db_user.bio, None, "User bio is not None.");
+    }
 
-    // #[tokio::test]
-    // async fn test_get_user_by_username() {
-    //     let db = db::Database::new(dotenv::var("DATABASE_URL").unwrap().as_str()).await.unwrap();
-    //     let db_user = db.get_user_by_username("test").await.unwrap();
-    //     assert_eq!(db_user.get_username(), "test");
-    // }
+    #[tokio::test]
+    async fn delete_user() {
+        let db = db::Database::new(dotenv::var("DATABASE_URL").unwrap().as_str()).await.unwrap();
+        let db_user = db.get_user_by_username("test").await.unwrap();
+        db.delete_user(db_user).await.unwrap();
+    }
 
 }
