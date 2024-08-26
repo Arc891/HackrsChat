@@ -1,6 +1,6 @@
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
-
+use super::{ User, UserStatus };
 pub struct Database {
     pool: PgPool,
 }
@@ -15,11 +15,51 @@ impl Database {
         Ok(Self { pool })
     }
 
-    // pub async fn get_user(&self, username: &str) -> Result<Option<User>, sqlx::Error> {
-    //     let user = sqlx::query_as!(User, "SELECT * FROM users WHERE username = $1", username)
-    //         .fetch_optional(&self.pool)
-    //         .await?;
+    pub async fn create_user(&self, user: User) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            INSERT INTO users (username, password_hash, created_at, last_online, status, bio)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            "#,
+            user.username,
+            user.password_hash,
+            user.created_at,
+            user.last_online,
+            user.status as UserStatus,
+            user.bio
+        )
+        .execute(&self.pool)
+        .await?;
 
+        Ok(())
+    }
+
+    pub async fn delete_user(&self, user: User) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            DELETE FROM users
+            WHERE id = $1
+            "#,
+            user.id
+        )
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
+
+    // pub async fn get_user_by_username(&self, username: &str) -> Result<User, sqlx::Error> {
+    //     let user = sqlx::query_as!(
+    //         User,
+    //         r#"
+    //         SELECT id, username, password_hash, created_at, last_online, status, bio FROM users
+    //         WHERE username = $1
+    //         "#,
+    //         username
+    //     )
+    //     .fetch_one(&self.pool)
+    //     .await?;
+    
     //     Ok(user)
     // }
 }
