@@ -2,7 +2,7 @@ use sqlx::types::time;
 
 #[allow(dead_code)]
 
-#[derive(Debug, PartialEq, Eq, sqlx::Type)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, sqlx::Type)]
 #[sqlx(type_name = "userstatus")]
 pub enum UserStatus {
     Online,
@@ -56,12 +56,13 @@ pub struct User {
 
 impl User {
     pub fn new(username: String, password_hash: String) -> Self {
+        let now = time::OffsetDateTime::now_utc();
         Self {
             id: -1,
             username,
             password_hash,
-            created_at: time::OffsetDateTime::now_utc(),
-            last_online: time::OffsetDateTime::now_utc(),
+            created_at: now,
+            last_online: now,
             status: UserStatus::Offline,
             bio: None,
         }
@@ -85,8 +86,7 @@ impl User {
             "Zero-Day Hunter"
         } else if duration < 365 * 2 {
             "Kernel Developer"
-        } 
-        else {
+        } else {
             "Root Admin"
         }
 

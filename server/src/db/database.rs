@@ -30,7 +30,7 @@ impl Database {
         Ok(user.is_some())
     }
 
-    pub async fn create_user(&self, user: User) -> Result<(), sqlx::Error> {                 
+    pub async fn create_user(&self, user: &User) -> Result<(), sqlx::Error> {                 
         sqlx::query!(
             r#"
             INSERT INTO users (username, password_hash, created_at, last_online, status, bio)
@@ -52,7 +52,7 @@ impl Database {
     pub async fn delete_user(&self, user: User) -> Result<(), sqlx::Error> {
         sqlx::query!(
             r#"
-            DELETE FROM users
+            DELETE FROM users   
             WHERE id = $1
             "#,
             user.id
