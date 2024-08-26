@@ -1,3 +1,6 @@
 /target
 /server/target
+/server/.sqlx
+.sqlx
 err.out
+.envrc
