@@ -6,7 +6,8 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.86"
-sqlx = { version = "0.8.0", features = ["postgres", "runtime-tokio"] }
+dotenv = "0.15.0"
+sqlx = { version = "=0.8.0", features = ["postgres", "runtime-tokio", "time", "chrono"] }
 tokio = { version = "1.39.3", features = [
   # "full",
   "io-util",
