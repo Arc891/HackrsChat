@@ -1,6 +1,7 @@
 use super::{User, UserStatus};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
+
 pub struct Database {
     pool: PgPool,
 }
@@ -76,5 +77,18 @@ impl Database {
         .await?;
 
         Ok(user)
+    }
+
+    pub async fn get_users(&self) -> Result<Vec<User>, sqlx::Error> {
+        let users = sqlx::query_as!(
+            User,
+            r#"
+            SELECT id, username, password_hash, created_at, last_online, status AS "status!: UserStatus", bio FROM users
+            "#,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(users)
     }
 }

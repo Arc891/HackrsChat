@@ -5,41 +5,47 @@ use tokio::{
 };
 use anyhow::{ Context, Ok, Result };
 mod db;
+use db::Database;
 
 #[tokio::main]
 async fn main() -> Result<()> {
     let listener = TcpListener::bind("localhost:8080").await.context("Failed to bind.")?;
     let (tx, _rx) = broadcast::channel(10);
-    let _db = db::Database::new(
-        dotenv::var("DATABASE_URL")
-        .unwrap()
-        .as_str()
-    ).await.context("Failed to connect to database.")?;
     
     loop {
         let (mut socket, addr) = listener.accept().await.context("Failed to accept.")?;
         let tx = tx.clone();
         let mut rx = tx.subscribe();
-
+        
         tokio::spawn(async move {
             let (read, mut writer) = socket.split();
-        
+            
             let mut reader = BufReader::new(read);
             let mut line = String::new();
-        
+            
+            let db = Database::new(
+                dotenv::var("DATABASE_URL")
+                .unwrap()
+                .as_str()
+            ).await.context("Failed to connect to database.")?;
+    
             loop {
                 tokio::select! {
                     result = reader.read_line(&mut line) => {
                         if result.is_err() || result.unwrap() == 0 { break; } 
 
-                        tx.send((line.clone(), addr)).context("Failed to send message")?;
+                        let cmd = line.trim();
+                        if cmd == "exit" { break; }
+                        let response = handle_db_requests(&db, cmd).await.context("Failed to handle db requests.")?;
+
+                        tx.send((response, addr)).context("Failed to send message")?;
                         line.clear();
                     }
                     result = rx.recv() => {
                         if result.is_err() { break; }
                         
                         let (msg, recv_addr) = result.unwrap();
-                        if addr != recv_addr {
+                        if addr == recv_addr {
                             writer.write_all(&msg.as_bytes()).await.context("Failed to write buf on sock")?;
                         }
                     }
@@ -51,6 +57,28 @@ async fn main() -> Result<()> {
     
     #[allow(unreachable_code)]
     Ok(())
+}
+
+async fn handle_db_requests(db: &Database, cmd: &str) -> Result<String> {
+    let ret = match cmd {
+        user if user.starts_with("add_user ") => {
+            let username = user[9..].to_string();
+            let user = db::User
+                ::new(username, "test".to_string());
+            db.create_user(&user).await?;
+            format!("User added: {:?}\n", user)
+        }
+        "get_users" => {
+            let users = db.get_users().await?;
+            format!("{:?}\n", users)
+        }
+        _ => {
+            format!("Unknown command: {}\n", cmd)
+        }
+    };
+    
+    
+    Ok(ret)
 }
 
 #[cfg(test)]
