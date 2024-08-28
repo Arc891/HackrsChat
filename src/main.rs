@@ -1,3 +1,7 @@
+use std::io::BufRead;
+use std::io::Write;
+use std::net::TcpStream;
+
 use cursive::Cursive;
 use cursive::traits::*;
 use cursive::view::Margins;
@@ -168,15 +172,22 @@ fn submit_register(s: &mut Cursive) {
       None => String::from("")
     };
 
+  let mut stream = TcpStream::connect("localhost:8080").expect("Could not connect to server.");
+  stream.write(format!("add_user {}\n", username).as_bytes()).expect("Could not write to stream.");
+
+  let mut reader = std::io::BufReader::new(&stream);
+  let mut response = String::new();
+  reader.read_line(&mut response).expect("Could not read from stream.");
+  s.add_layer(Dialog::info(format!("Response: {response}")));
 
   let register_status = check_register(&username, &password, &password_confirm);
   if register_status > 0 {
-    let register_error = match register_status {
-      1 => "Invalid username or already taken.",
-      2 => "Passwords do not match.",
-      0|3_u32..=u32::MAX => "Unknown error.",
-    };
-    s.add_layer(Dialog::info(register_error));
+    s.add_layer(Dialog::info(
+      match register_status {
+        1 => "Invalid username or already taken.",
+        2 => "Passwords do not match.",
+        0|3_u32..=u32::MAX => "Unknown error.",
+    }));
     return;
   }
 

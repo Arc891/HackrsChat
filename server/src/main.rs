@@ -38,6 +38,8 @@ async fn main() -> Result<()> {
                         if cmd == "exit" { break; }
                         let response = handle_db_requests(&db, cmd).await.context("Failed to handle db requests.")?;
 
+                        println!("Received: {}, sending: {} to {}", cmd, response, addr);
+
                         tx.send((response, addr)).context("Failed to send message")?;
                         line.clear();
                     }
@@ -46,6 +48,7 @@ async fn main() -> Result<()> {
                         
                         let (msg, recv_addr) = result.unwrap();
                         if addr == recv_addr {
+                            println!("Sending: {} to {}", msg, addr);
                             writer.write_all(&msg.as_bytes()).await.context("Failed to write buf on sock")?;
                         }
                     }

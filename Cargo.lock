@@ -725,6 +725,7 @@ dependencies = [
  "cursive",
  "cursive-async-view",
  "hackrschat-server",
+ "tokio",
 ]
 
 [[package]]
