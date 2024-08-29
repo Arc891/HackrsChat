@@ -1,18 +1,40 @@
-use std::io::BufRead;
-use std::io::Write;
-use std::net::TcpStream;
+// use std::time::Duration;
 
-use cursive::Cursive;
-use cursive::traits::*;
-use cursive::view::Margins;
-use cursive::views::*;
-use cursive::align::HAlign;
+use std::{
+  io::{
+    Read, 
+    Write
+  }, 
+  net::TcpStream
+};
+
+// use tokio::{
+//   io::{
+//     AsyncReadExt, 
+//     AsyncWriteExt,
+//   }, 
+//   // net::TcpStream, 
+//   // time::Instant,
+// };
+
+use cursive::{
+  self,
+  align::HAlign, 
+  traits::*, 
+  view::Margins, 
+  views::*, 
+  Cursive,
+  CursiveExt,
+};
+// use cursive_async_view::{
+//   AsyncState, AsyncView, 
+//   AsyncProgressView, AsyncProgressState
+// };
 // use cursive::theme::ColorStyle;
 // use cursive::theme::PaletteStyle;
 // use std::time::{Instant, Duration};
 // use cursive::logger::log;
 // use cursive::style::gradient::Linear;
-// use cursive_async_view::{AsyncState, AsyncView};
 
 const T_HEIGHT: usize = 20;
 const T_WIDTH: usize = 80;
@@ -22,8 +44,11 @@ const LOGO_WIDTH: usize = 64;
 
 const ENTRY_WIDTH: usize = 15;
 
-fn main() {
-  let mut siv = cursive::default();
+#[tokio::main]
+async fn main() {
+  cursive::logger::init();
+
+  let mut siv = Cursive::default();
 
   // Read logo from assets/logo_full.txt
   let logo: &str = include_str!("../assets/logo_full.txt");
@@ -133,22 +158,36 @@ fn register(s: &mut Cursive) {
       .with_name("password_confirm")
       .fixed_width(ENTRY_WIDTH));
 
-    let register_view = LinearLayout::horizontal()
-      .child(labels)
-      .child(entries);
+  let registering_view = LinearLayout::horizontal()
+    .child(labels)
+    .child(entries);
 
-  s.add_layer(Dialog::around(register_view)
+  let register = Dialog::around(registering_view)
     .title("Register")
     .padding(Margins::lr(3, 3))
     .button("Back", login_menu)
     .button("Login", login)
-    .button("Submit", submit_register));
+    .button("Submit", submit_register);
+  
+  // let async_register: AsyncView<DummyView> = AsyncView::new(s, move || {
+  //   let instant = Instant::now();
+  //   if instant.elapsed() > Duration::from_secs(1) {
+  //     return AsyncState::Available(DummyView);
+  //   } else {
+  //     return AsyncState::Pending;
+  //   }
+  // });
+
+  s.add_layer(register);
 }
 
 fn check_register(username: &str, password: &str, password_confirm: &str) -> u32 {
-  if username == "" { 1 }
-  else if password == password_confirm && password != "" { 0 } 
-  else { 2 }
+  let username_taken = send_db_command(&format!("check_user {}\n", username)).trim().to_string().eq("true");
+  if username.len() < 1  { 1 }
+  else if username_taken { 2 }
+  else if password != password_confirm { 3 }
+  else if password.len() < 1 { 4 }
+  else { 0 }
 }
 
 fn submit_register_with_arg(s: &mut Cursive, _: &str) {
@@ -172,21 +211,15 @@ fn submit_register(s: &mut Cursive) {
       None => String::from("")
     };
 
-  let mut stream = TcpStream::connect("localhost:8080").expect("Could not connect to server.");
-  stream.write(format!("add_user {}\n", username).as_bytes()).expect("Could not write to stream.");
-
-  let mut reader = std::io::BufReader::new(&stream);
-  let mut response = String::new();
-  reader.read_line(&mut response).expect("Could not read from stream.");
-  s.add_layer(Dialog::info(format!("Response: {response}")));
-
   let register_status = check_register(&username, &password, &password_confirm);
   if register_status > 0 {
     s.add_layer(Dialog::info(
       match register_status {
-        1 => "Invalid username or already taken.",
-        2 => "Passwords do not match.",
-        0|3_u32..=u32::MAX => "Unknown error.",
+        1 => "Invalid username.",
+        2 => "Username is taken.",
+        3 => "Passwords do not match.",
+        4 => "Invalid password.",
+        0|5..=u32::MAX => "Unknown error.",
     }));
     return;
   }
@@ -384,4 +417,16 @@ fn terminal_command(s: &mut Cursive, command: &str) {
       v.append(format!("$ {}\n{}\n", command, output));
     }
   });
+}
+
+fn send_db_command(command: &str) -> String {
+  let mut stream = TcpStream::connect("localhost:8080").expect("Could not connect to server.");
+  let mut buffer = [0; 4096];
+  let mut response = String::new();
+
+  stream.write_all(command.as_bytes()).expect("Could not write to stream.");
+  let n = stream.read(&mut buffer).expect("Could not read from stream.");
+  response.push_str(std::str::from_utf8(&buffer[..n]).expect("Could not convert buffer to string."));
+
+  response
 }
