@@ -18,6 +18,8 @@ async fn main() -> Result<()> {
         let mut rx = tx.subscribe();
         
         tokio::spawn(async move {
+            println!("Accepted connection from: {}", addr);
+        
             let (read, mut writer) = socket.split();
             
             let mut reader = BufReader::new(read);
@@ -28,11 +30,20 @@ async fn main() -> Result<()> {
                 .unwrap()
                 .as_str()
             ).await.context("Failed to connect to database.")?;
-    
+            
+            println!("Entering loop...");
+
             loop {
+                println!("Waiting for a message...");
                 tokio::select! {
                     result = reader.read_line(&mut line) => {
-                        if result.is_err() || result.unwrap() == 0 { break; } 
+                        if result.is_err() {
+                            println!("Failed to read from socket: {:?}", result.err());
+                            break;
+                        }
+                        if result.unwrap() == 0 {
+                            break; 
+                        } 
 
                         let cmd = line.trim();
                         if cmd == "exit" { break; }
@@ -47,13 +58,14 @@ async fn main() -> Result<()> {
                         if result.is_err() { break; }
                         
                         let (msg, recv_addr) = result.unwrap();
-                        if addr == recv_addr {
-                            println!("Sending: {} to {}", msg, addr);
-                            writer.write_all(&msg.as_bytes()).await.context("Failed to write buf on sock")?;
-                        }
+                        // if addr == recv_addr {
+                        println!("Sending: {} to {}", msg, addr);
+                        writer.write_all(&msg.as_bytes()).await.context("Failed to write buf on sock")?;
+                        // }
                     }
                 }
             }
+            println!("Connection closed.");
             Ok(())
         });
     }
@@ -71,9 +83,21 @@ async fn handle_db_requests(db: &Database, cmd: &str) -> Result<String> {
             db.create_user(&user).await?;
             format!("User added: {:?}\n", user)
         }
+        user if user.starts_with("get_user ") => {
+            let username = user[9..].to_string();
+            if db.check_user_exists(username.as_str()).await? == false {
+                return Ok("User does not exist.\n".to_string());
+            }
+            let user = db.get_user_by_username(&username).await?;
+            format!("{:?}\n", user)
+        }
         "get_users" => {
             let users = db.get_users().await?;
             format!("{:?}\n", users)
+        }
+        user if user.starts_with("check_user ") => {
+            let username = user[11..].to_string();
+            format!("{}\n", db.check_user_exists(username.as_str()).await?)
         }
         _ => {
             format!("Unknown command: {}\n", cmd)
