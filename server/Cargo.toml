@@ -7,6 +7,8 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.86"
 dotenv = "0.15.0"
+rcgen = "0.13.1"
+rustls = "0.23.12"
 sqlx = { version = "=0.8.0", features = ["postgres", "runtime-tokio", "time", "chrono"] }
 tokio = { version = "1.39.3", features = [
   # "full",
@@ -17,3 +19,4 @@ tokio = { version = "1.39.3", features = [
   "rt-multi-thread",
   "sync",
 ] }
+tokio-rustls = "0.26.0"
