@@ -1,0 +1,23 @@
+{
+    "name": "hackrschat-dev",
+
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+
+    
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "streetsidesoftware.code-spell-checker",
+                "tamasfe.even-better-toml",
+                "rust-lang.rust-analyzer"
+            ]
+        }
+    },
+    "capAdd": ["SYS_PTRACE"],
+    "securityOpt": [ "seccomp=unconfined" ],
+    "forwardPorts": [
+        1111
+    ]
+}

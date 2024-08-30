@@ -1,6 +1,4 @@
-/target
-/server/target
-/server/.sqlx
-.sqlx
+*target
+*.sqlx
 err.out
 .envrc

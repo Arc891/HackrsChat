@@ -12,6 +12,18 @@ HackrsChat is a personal-use self-host TUI chat application for you and your fri
 This chat application will have a privacy-focused approach, with the ability to self-host the server and client, and with good encryption and safety practices, to be sure that your data is safe and secure.
 This project is currently a work in progress, feel free to contribute!
 
+
+## Development
+
+After cloning this repository and with the [Devcontainers VSCode](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension you can open the command runner to launch the following command: _"DevContainer: Rebuild and Reopen in Container"_. This will open a VSCode server inside a docker container with all necessary dependencies installed (see [`.devcontainer/Dockerfile`](.devcontainer/Dockerfile)).
+
+We can specify the command targets in the `Justfile` (a Makefile alternative). Which means we can run the application with:
+
+``` bash
+just run
+```
+
+
 ## Demo
 
 https://github.com/user-attachments/assets/875b51e0-e4cb-4c58-8fda-016139f2115f

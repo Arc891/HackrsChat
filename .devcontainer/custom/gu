@@ -1,0 +1,21 @@
+#!/bin/bash
+
+STATUS=$(git status)
+
+TEST=$(echo $STATUS | awk '{print $NF}')
+
+if [ "$TEST" != "clean" ]; then
+	git add .
+	git status
+	echo -n "Sure you want to commit and push? (y/n) "
+	read INPUT
+	if [ "$INPUT" = "y" ]; then
+		echo -n "Commit message: "
+		read INPUT
+		git commit -m "$INPUT"
+		git push
+	else
+		echo "cancelled"
+	fi
+fi
+
