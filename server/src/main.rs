@@ -49,7 +49,7 @@ async fn main() -> Result<()> {
                         if cmd == "exit" { break; }
                         let response = handle_db_requests(&db, cmd).await.context("Failed to handle db requests.")?;
 
-                        println!("Received: {}, sending: {} to {}", cmd, response, addr);
+                        println!("Received: '{}' from {}", cmd, addr);
 
                         tx.send((response, addr)).context("Failed to send message")?;
                         line.clear();
@@ -57,7 +57,7 @@ async fn main() -> Result<()> {
                     result = rx.recv() => {
                         if result.is_err() { break; }
 
-                        let (msg, recv_addr) = result.unwrap();
+                        let (msg, _recv_addr) = result.unwrap();
                         // if addr == recv_addr {
                         println!("Sending: {} to {}", msg, addr);
                         writer.write_all(&msg.as_bytes()).await.context("Failed to write buf on sock")?;
@@ -98,11 +98,14 @@ async fn handle_db_requests(db: &Database, cmd: &str) -> Result<String> {
                 return Ok("User does not exist.\n".to_string());
             }
             let user = db.get_user_by_username(&username).await?;
-            format!("{:?}\n", user)
+            format!("{}\n", serde_json::to_string(&user).unwrap())
         }
-        "get_users" => {
+        cmd if cmd.starts_with("get_users") => {
+            if cmd.len() > 9 {
+                return Ok("Invalid command, did you mean 'get_users'?.\n".to_string());
+            }
             let users = db.get_users().await?;
-            format!("{:?}\n", users)
+            format!("{}\n", serde_json::to_string(&users).unwrap())
         }
         "check_user" => "Please enter a username to check.\n".to_string(),
         cmd if cmd.starts_with("check_user ") => {
@@ -133,50 +136,23 @@ mod tests {
 
     #[tokio::test]
     async fn add_and_check_and_delete_user() {
-        let db = setup().await.unwrap();
-        assert!(
-            db.check_user_exists("test").await.unwrap() == false,
-            "User already exists in database."
-        );
+        let setup = setup().await.unwrap();
+        let db = setup;
+        assert!(db.check_user_exists("test").await.unwrap() == false, "User already exists in database.");
 
         let user = User::new("test".to_string(), "test".to_string());
         db.create_user(&user).await.unwrap();
-        assert!(
-            db.check_user_exists("test").await.unwrap() == true,
-            "User does not exist in database."
-        );
+        assert!(db.check_user_exists("test").await.unwrap() == true, "User does not exist in database.");
 
         let db_user = db.get_user_by_username("test").await.unwrap();
-        assert_ne!(
-            db_user.id, -1, 
-            "User id is -1."
-        );
-        assert_eq!(
-            db_user.username, "test", 
-            "Usernames do not match."
-        );
-        assert_eq!(
-            db_user.password_hash, "test",
-            "Password hashes do not match."
-        );
-        assert_eq!(
-            db_user.created_at, db_user.last_online,
-            "User created_at and last_online do not match."
-        );
-        assert_eq!(
-            db_user.status,
-            UserStatus::Offline,
-            "User status is not offline."
-        );
-        assert_eq!(
-            db_user.bio, None, 
-            "User bio is not None."
-        );
+        assert_ne!(db_user.id, -1, "User id is -1.");
+        assert_eq!(db_user.username, "test", "Usernames do not match.");
+        assert_eq!(db_user.password_hash, "test", "Password hashes do not match.");
+        assert_eq!(db_user.created_at, db_user.last_online, "User created_at and last_online do not match.");
+        assert_eq!(db_user.status, UserStatus::Offline, "User status is not offline.");
+        assert_eq!(db_user.bio, None, "User bio is not None.");
 
         db.delete_user(db_user).await.unwrap();
-        assert!(
-            db.check_user_exists("test").await.unwrap() == false,
-            "User still exists in database."
-        );
+        assert!(db.check_user_exists("test").await.unwrap() == false, "User still exists in database.");
     }
 }
