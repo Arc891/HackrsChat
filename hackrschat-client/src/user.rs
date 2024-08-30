@@ -1,9 +1,7 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[allow(dead_code)]
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
-#[sqlx(type_name = "userstatus")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum UserStatus {
     Online,
     Away,
@@ -19,22 +17,14 @@ impl From<()> for UserStatus {
 impl std::fmt::Display for UserStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            UserStatus::Away  => write!(f, "Away"),
+            UserStatus::Away => write!(f, "Away"),
             UserStatus::Online => write!(f, "Online"),
             UserStatus::Offline => write!(f, "Offline"),
         }
     }
 }
 
-// pub struct ClientUser {
-//     pub username: String,
-//     pub rank: String,
-//     pub last_online: time::OffsetDateTime,
-//     pub status: UserStatus,
-//     pub bio: Option<String>,
-// }
-
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct User {
     pub id: i32,
     pub username: String,
@@ -103,32 +93,45 @@ impl User {
         // Zero-Day Specialist
         // Anonymous Member - think about options
 
-        // Could also use network layers as a reference    
+        // Could also use network layers as a reference
     }
 
     pub fn format_last_online(&self) -> String {
         let now = time::OffsetDateTime::now_utc();
         let duration = (now - self.last_online).whole_minutes();
-        
+
         if duration < 1 {
-            "Online".to_string()
+            "Now".to_string()
         } else if duration < 60 {
-            format!("Last online: {} minutes ago", duration)
+            format!("{} minutes ago", duration)
         } else if duration < 1440 {
-            format!("Last online: {} hours ago", duration / 60)
+            format!("{} hours ago", duration / 60)
         } else {
-            format!("Last online: {} days ago", duration / 1440)
+            format!("{} days ago", duration / 1440)
         }
     }
 
     pub fn display_info(&self) -> String {
         format!(
-            "User: {}\nBio: {}\nRank: {}\nLast Online: {}\nStatus: {:?}",
-            self.username,
-            self.bio.as_deref().unwrap_or("No bio"),
+            "User: {}, Bio: {}, Rank: {}, Status: {:?}, Last seen: {}",
+            self.get_username(),
+            self.get_bio().as_deref().unwrap_or("No bio"),
             self.creation_time_rank(),
+            self.get_status(),
             self.format_last_online(),
-            self.status
         )
+        .to_owned()
+    }
+
+    pub fn get_username(&self) -> String {
+        self.username.clone()
+    }
+
+    pub fn get_status(&self) -> UserStatus {
+        self.status.clone()
+    }
+
+    pub fn get_bio(&self) -> Option<String> {
+        self.bio.clone()
     }
 }
