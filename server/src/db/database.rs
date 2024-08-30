@@ -91,4 +91,23 @@ impl Database {
 
         Ok(users)
     }
+
+    // TODO: Think about checks for updating user and how to prevent misuse
+    pub async fn update_user(&self, user: User) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            UPDATE users
+            SET username = $1, password_hash = $2, bio = $3
+            WHERE id = $4
+            "#,
+            user.username,
+            user.password_hash,
+            user.bio,
+            user.id
+        )
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
 }
