@@ -1,8 +1,8 @@
-use sqlx::types::time;
+use serde::{Serialize, Deserialize};
 
 #[allow(dead_code)]
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, sqlx::Type)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "userstatus")]
 pub enum UserStatus {
     Online,
@@ -26,7 +26,15 @@ impl std::fmt::Display for UserStatus {
     }
 }
 
-#[derive(Debug, sqlx::FromRow)]
+// pub struct ClientUser {
+//     pub username: String,
+//     pub rank: String,
+//     pub last_online: time::OffsetDateTime,
+//     pub status: UserStatus,
+//     pub bio: Option<String>,
+// }
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct User {
     pub id: i32,
     pub username: String,
@@ -68,7 +76,7 @@ impl User {
         }
     }
 
-    pub fn created_at_rank(&self) -> &str {
+    pub fn creation_time_rank(&self) -> &str {
         let now = time::OffsetDateTime::now_utc();
         let duration = (now - self.created_at).whole_days();
 
@@ -118,7 +126,7 @@ impl User {
             "User: {}\nBio: {}\nRank: {}\nLast Online: {}\nStatus: {:?}",
             self.username,
             self.bio.as_deref().unwrap_or("No bio"),
-            self.created_at_rank(),
+            self.creation_time_rank(),
             self.format_last_online(),
             self.status
         )

@@ -1,6 +1,5 @@
 use super::{User, UserStatus};
-use sqlx::postgres::PgPoolOptions;
-use sqlx::PgPool;
+use sqlx::{postgres::PgPoolOptions, PgPool};
 
 pub struct Database {
     pool: PgPool,
@@ -84,6 +83,7 @@ impl Database {
             User,
             r#"
             SELECT id, username, password_hash, created_at, last_online, status AS "status!: UserStatus", bio FROM users
+            ORDER BY username ASC
             "#,
         )
         .fetch_all(&self.pool)
