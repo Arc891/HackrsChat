@@ -18,6 +18,8 @@ use cursive::{
     // style::gradient::Linear;
 };
 
+use serde::{Serialize, Deserialize};
+
 // use tokio::{
 //   io::{
 //     AsyncReadExt,
@@ -31,6 +33,9 @@ use cursive::{
 //   AsyncState, AsyncView,
 //   AsyncProgressView, AsyncProgressState
 // };
+
+mod user;
+use user::User;
 
 const T_HEIGHT: usize = 20;
 const T_WIDTH: usize = 80;
@@ -291,16 +296,19 @@ fn main_menu(s: &mut Cursive) {
                 .child(terminal_prefix)
                 .child(terminal_input),
         );
-
-    let chats = vec![
-        ("Chat 1", "Chat 1 description"),
-        ("Chat 2", "Chat 2 description"),
-        ("Chat 3", "Chat 3 description"),
-    ];
+    
+        
+    let users = db_command_with_ret_vec("get_users\n").into_iter().map(|u| (u.get_username(), u.display_info())).collect::<Vec<(String, String)>>();
+        
+    // let _chats = vec![
+    //     ("Chat 1".to_string(), "Chat 1 description".to_string()),
+    //     ("Chat 2".to_string(), "Chat 2 description".to_string()),
+    //     ("Chat 3".to_string(), "Chat 3 description".to_string()),
+    // ];
     let select = SelectView::new()
-        .with_all(std::iter::repeat(chats).take(1).flatten())
+        .with_all(std::iter::repeat(users).take(1).flatten())
         //.on_submit(|s, item: &str| s.add_layer(Dialog::info(format!("Selected: {}", item))))
-        .on_submit(|s, item: &str| chat(s, item))
+        .on_submit(|s, item: &String| chat(s, &item))
         .with_name("chats");
 
     let horizontal_line = std::iter::repeat(String::from("|\n"))
@@ -463,4 +471,30 @@ fn send_db_command(command: &str) -> String {
         .push_str(std::str::from_utf8(&buffer[..n]).expect("Could not convert buffer to string."));
 
     response
+}
+
+fn db_command_with_ret(command: &str) -> User {
+    let response = send_db_command(command);
+    let user: Result<User, serde_json::Error> = serde_json::from_str(&response);
+    match user {
+        Ok(u) => u,
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            User::new("err".to_string(), "err".to_string())
+        }
+    }
+}
+
+fn db_command_with_ret_vec(command: &str) -> Vec<User> {
+    let response = send_db_command(command);
+    let users: Result<Vec<User>, serde_json::Error> = serde_json::from_str(&response);
+    match users {
+        Ok(u) => u,
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            let err_user = User::new("err".to_string(), "err".to_string());
+            // vec![err_user.clone(), err_user.clone(), err_user.clone(), err_user.clone()]
+            std::iter::repeat(err_user).take(4).collect::<Vec<User>>()
+        }
+    }
 }
