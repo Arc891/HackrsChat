@@ -6,6 +6,11 @@ I want to make use of JWT for authentication and authorization. This means that 
 
 ## Database structure
 
+Status enum:
+```sql
+CREATE TYPE userstatus AS ENUM ('Online', 'Away', 'Offline');
+```
+
 Table users:
 ```sql
 CREATE TABLE users (
@@ -14,7 +19,7 @@ username TEXT NOT NULL UNIQUE,
 password_hash TEXT NOT NULL,
 created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 last_online TIMESTAMPTZ NOT NULL,
-status TEXT NOT NULL,
+status userstatus NOT NULL,
 bio TEXT
 )
 ```
