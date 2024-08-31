@@ -5,7 +5,7 @@ use tokio::{
     sync::broadcast,
 };
 mod db;
-use db::{Database, User, UserStatus};
+use db::{Database, User, UserClient};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -98,13 +98,15 @@ async fn handle_db_requests(db: &Database, cmd: &str) -> Result<String> {
                 return Ok("User does not exist.\n".to_string());
             }
             let user = db.get_user_by_username(&username).await?;
-            format!("{}\n", serde_json::to_string(&user).unwrap())
+            let user_client = user.into_user_client();
+            format!("{}\n", serde_json::to_string(&user_client).unwrap())
         }
         cmd if cmd.starts_with("get_users") => {
             if cmd.len() > 9 {
                 return Ok("Invalid command, did you mean 'get_users'?.\n".to_string());
             }
             let users = db.get_users().await?;
+            let users: Vec<UserClient> = users.into_iter().map(|user| user.into_user_client()).collect();
             format!("{}\n", serde_json::to_string(&users).unwrap())
         }
         "check_user" => "Please enter a username to check.\n".to_string(),
@@ -127,6 +129,7 @@ async fn handle_db_requests(db: &Database, cmd: &str) -> Result<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use db::UserStatus;
 
     async fn setup() -> Result<Database> {
         let db_url = dotenv::var("DATABASE_URL").unwrap();

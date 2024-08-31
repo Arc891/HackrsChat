@@ -45,22 +45,14 @@ pub struct User {
     pub bio: Option<String>,
 }
 
-// #[derive(Debug, sqlx::FromRow)]
-// pub struct UserLogin {
-//     id: i32,
-//     username: String,
-//     password_hash: String,
-// }
-
-// #[derive(Debug, sqlx::FromRow)]
-// pub struct UserProfile {
-//     id: i32,
-//     username: String,
-//     bio: Option<String>,
-//     created_at: time::OffsetDateTime,
-//     last_online: time::OffsetDateTime,
-//     status: UserStatus,
-// }
+#[derive(Debug, Serialize, sqlx::FromRow)]
+pub struct UserClient {
+    username: String,
+    rank: String,
+    last_online: String,
+    status: UserStatus,
+    bio: Option<String>,
+}
 
 impl User {
     pub fn new(username: String, password_hash: String) -> Self {
@@ -130,5 +122,15 @@ impl User {
             self.format_last_online(),
             self.status
         )
+    }
+
+    pub fn into_user_client(&self) -> UserClient {
+        UserClient {
+            username: self.username.clone(),
+            rank: self.creation_time_rank().to_string(),
+            last_online: self.format_last_online(),
+            status: self.status,
+            bio: self.bio.clone(),
+        }
     }
 }

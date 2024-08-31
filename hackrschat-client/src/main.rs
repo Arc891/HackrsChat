@@ -18,7 +18,7 @@ use cursive::{
     // style::gradient::Linear;
 };
 
-use serde::{Serialize, Deserialize};
+// use serde::{Serialize, Deserialize};
 
 // use tokio::{
 //   io::{
@@ -35,7 +35,7 @@ use serde::{Serialize, Deserialize};
 // };
 
 mod user;
-use user::User;
+use user::{User, UserStatus};
 
 const T_HEIGHT: usize = 20;
 const T_WIDTH: usize = 80;
@@ -473,17 +473,17 @@ fn send_db_command(command: &str) -> String {
     response
 }
 
-fn db_command_with_ret(command: &str) -> User {
-    let response = send_db_command(command);
-    let user: Result<User, serde_json::Error> = serde_json::from_str(&response);
-    match user {
-        Ok(u) => u,
-        Err(e) => {
-            eprintln!("Error: {}", e);
-            User::new("err".to_string(), "err".to_string())
-        }
-    }
-}
+// fn db_command_with_ret(command: &str) -> User {
+//     let response = send_db_command(command);
+//     let user: Result<User, serde_json::Error> = serde_json::from_str(&response);
+//     match user {
+//         Ok(u) => u,
+//         Err(e) => {
+//             eprintln!("Error: {}", e);
+//             User::new("err".to_string(), "err".to_string(), "err".to_string(), UserStatus::Offline, None)
+//         }
+//     }
+// }
 
 fn db_command_with_ret_vec(command: &str) -> Vec<User> {
     let response = send_db_command(command);
@@ -492,7 +492,7 @@ fn db_command_with_ret_vec(command: &str) -> Vec<User> {
         Ok(u) => u,
         Err(e) => {
             eprintln!("Error: {}", e);
-            let err_user = User::new("err".to_string(), "err".to_string());
+            let err_user = User::new("err".to_string(), "err".to_string(), "err".to_string(), UserStatus::Offline, None);
             // vec![err_user.clone(), err_user.clone(), err_user.clone(), err_user.clone()]
             std::iter::repeat(err_user).take(4).collect::<Vec<User>>()
         }
