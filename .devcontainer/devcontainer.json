@@ -1,11 +1,18 @@
 {
     "name": "hackrschat-dev",
 
-    "build": {
-        "dockerfile": "Dockerfile"
-    },
+    // "build": {
+    //     "dockerfile": "Dockerfile"
+        
+    // },
 
     
+    
+    
+    "dockerComposeFile": "docker-compose.yaml",
+    "service": "devcontainer",
+    "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+
     "customizations": {
         "vscode": {
             "extensions": [

@@ -3,6 +3,8 @@ FROM rust:1.80.1-bullseye
 RUN apt update && apt upgrade -y
 RUN apt update --fix-missing && apt install -y sudo wget curl vim git build-essential
 
+RUN apt install -y iputils-ping postgresql-client
+
 # Add custom user "dev" with sudo permissions
 RUN useradd dev -u 1000 -m -s /bin/bash && \
 	echo "dev ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
