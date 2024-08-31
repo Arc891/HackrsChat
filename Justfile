@@ -8,4 +8,6 @@
 run:
     RUST_BACKTRACE=full cargo run -p hackrschat-client > err.out 2>&1;
 
+server:
+    cargo run -p hackrschat-server;
 

@@ -57,3 +57,4 @@ fi
 
 
 export PATH=$PATH:/usr/local/go/bin:/usr/go/bin:/home/dev/go/bin/:/home/dev/.local/bin
+export DATABASE_URL=postgres://postgres:postgres@db:5432/hackrschat
