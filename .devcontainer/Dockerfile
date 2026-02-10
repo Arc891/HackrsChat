@@ -1,4 +1,4 @@
-FROM rust:1.80.1-bullseye
+FROM rust:1.93-bookworm
 
 RUN apt update && apt upgrade -y
 RUN apt update --fix-missing && apt install -y sudo wget curl vim git build-essential
@@ -15,6 +15,9 @@ RUN curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/ca
 
 # Command runner similar to make
 RUN cargo binstall just --no-confirm
+
+# SQLx CLI for migrations and query caching
+RUN cargo binstall sqlx-cli --no-confirm
 
 # Terminal prompt customizations
 COPY custom/gu /usr/local/bin/gu
