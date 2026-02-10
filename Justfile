@@ -7,6 +7,9 @@ run:
 server:
     cargo run -p hackrschat-server;
 
+init-db:
+    ./scripts/init_db.sh
+
 migrate:
     cargo sqlx migrate run
 

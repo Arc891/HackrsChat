@@ -34,8 +34,7 @@ use cursive::{
 //   AsyncProgressView, AsyncProgressState
 // };
 
-mod user;
-use user::{User, UserStatus};
+use hackrschat_common::types::{UserInfo, UserStatus};
 
 const T_HEIGHT: usize = 20;
 const T_WIDTH: usize = 80;
@@ -298,7 +297,7 @@ fn main_menu(s: &mut Cursive) {
         );
     
         
-    let users = db_command_with_ret_vec("get_users\n").into_iter().map(|u| (u.get_username(), u.display_info())).collect::<Vec<(String, String)>>();
+    let users = db_command_with_ret_vec("get_users\n").into_iter().map(|u| (u.username.clone(), u.display_info())).collect::<Vec<(String, String)>>();
         
     // let _chats = vec![
     //     ("Chat 1".to_string(), "Chat 1 description".to_string()),
@@ -388,7 +387,7 @@ fn terminal_command(s: &mut Cursive, command: &str) {
             ""
         }
         "l" | "list" => {
-            match s.call_on_name("chats", |v: &mut SelectView<&str>| {
+            match s.call_on_name("chats", |v: &mut SelectView<String>| {
                 v.iter()
                     .map(|(s, _)| String::from(s))
                     .collect::<Vec<String>>()
@@ -422,9 +421,9 @@ fn terminal_command(s: &mut Cursive, command: &str) {
             if param == "" {
                 "Invalid chat name."
             } else {
-                let chat_name = match s.call_on_name("chats", |v: &mut SelectView<&str>| {
+                let chat_name = match s.call_on_name("chats", |v: &mut SelectView<String>| {
                     match v.iter().find(move |(s, _)| *s == param) {
-                        Some((s, d)) => (String::from(s), String::from(*d)),
+                        Some((s, d)) => (String::from(s), d.clone()),
                         None => ("".to_string(), "".to_string()),
                     }
                 }) {
@@ -485,16 +484,21 @@ fn send_db_command(command: &str) -> String {
 //     }
 // }
 
-fn db_command_with_ret_vec(command: &str) -> Vec<User> {
+fn db_command_with_ret_vec(command: &str) -> Vec<UserInfo> {
     let response = send_db_command(command);
-    let users: Result<Vec<User>, serde_json::Error> = serde_json::from_str(&response);
+    let users: Result<Vec<UserInfo>, serde_json::Error> = serde_json::from_str(&response);
     match users {
         Ok(u) => u,
         Err(e) => {
             eprintln!("Error: {}", e);
-            let err_user = User::new("err".to_string(), "err".to_string(), "err".to_string(), UserStatus::Offline, None);
-            // vec![err_user.clone(), err_user.clone(), err_user.clone(), err_user.clone()]
-            std::iter::repeat(err_user).take(4).collect::<Vec<User>>()
+            let err_user = UserInfo {
+                username: "err".to_string(),
+                rank: "err".to_string(),
+                last_online: "err".to_string(),
+                status: UserStatus::Offline,
+                bio: None,
+            };
+            std::iter::repeat(err_user).take(4).collect::<Vec<UserInfo>>()
         }
     }
 }

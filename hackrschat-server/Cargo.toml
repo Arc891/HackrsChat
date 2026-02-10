@@ -10,17 +10,19 @@ repository.workspace = true
 
 
 [dependencies]
+hackrschat-common = { path = "../hackrschat-common", features = ["sqlx"] }
 anyhow = "1.0.86"
-dotenv = "0.15.0"
+dotenvy = "0.15"
 rcgen = "0.13.1"
 rustls = "0.23.12"
 serde = { version = "1.0.209", features = ["derive"] }
 serde_json = "1.0"
-sqlx = { version = "=0.8.0", features = [
+sqlx = { version = "0.8", features = [
   "postgres",
   "runtime-tokio",
   "time",
   "chrono",
+  "migrate",
 ] }
 time = { version = "0.3.36", features = ["serde"] }
 tokio = { version = "1.39.3", features = [

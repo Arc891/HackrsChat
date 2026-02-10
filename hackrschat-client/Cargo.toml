@@ -10,6 +10,7 @@ repository.workspace = true
 
 
 [dependencies]
+hackrschat-common = { path = "../hackrschat-common" }
 cursive = "0.21"
 cursive-async-view = "0.6.0"
 time = { version = "0.3.36", features = ["serde"] }
