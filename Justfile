@@ -6,3 +6,9 @@ run:
 
 server:
     cargo run -p hackrschat-server;
+
+migrate:
+    cargo sqlx migrate run
+
+sqlx-prepare:
+    cargo sqlx prepare --workspace

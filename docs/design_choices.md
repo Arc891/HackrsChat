@@ -94,3 +94,8 @@ UserClient -- ServerUser
 - [ ] Get JWT working
 - [ ] Get asymmetric encryption working for user to user messages
 - [ ] Research group message encryption
+
+## Environment Notes
+
+- DATABASE_URL: `postgres://postgres:postgres@localhost:5432/hackrschat` (uses localhost because devcontainer shares network with db via `network_mode: service:db`)
+- Schema management: sqlx migrations in `migrations/` directory (auto-run on server startup)

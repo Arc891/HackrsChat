@@ -10,5 +10,5 @@ resolver = "2"
 rust-version = "1.80.1"
 edition = "2021"
 version = "0.1.0"
-authors = ["Ezra Hulsman <[info@ezrah.me]>", "Max Gallup <[maxgallup@pm.me]>"]
+authors = ["Arc891 <[info@arc8.dev]>", "Max Gallup <[maxgallup@pm.me]>"]
 repository = "https://github.com/Arc891/HackrsChat"
