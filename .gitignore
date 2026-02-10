@@ -2,3 +2,5 @@
 *.sqlx
 err.out
 .envrc
+.env
+.vscode/
