@@ -1,38 +1,5 @@
 use serde::{Serialize, Deserialize};
-
-#[allow(dead_code)]
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
-#[sqlx(type_name = "userstatus")]
-pub enum UserStatus {
-    Online,
-    Away,
-    Offline,
-}
-
-impl From<()> for UserStatus {
-    fn from(_: ()) -> Self {
-        UserStatus::Offline
-    }
-}
-
-impl std::fmt::Display for UserStatus {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            UserStatus::Away  => write!(f, "Away"),
-            UserStatus::Online => write!(f, "Online"),
-            UserStatus::Offline => write!(f, "Offline"),
-        }
-    }
-}
-
-// pub struct ClientUser {
-//     pub username: String,
-//     pub rank: String,
-//     pub last_online: time::OffsetDateTime,
-//     pub status: UserStatus,
-//     pub bio: Option<String>,
-// }
+use hackrschat_common::types::{UserStatus, UserInfo};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct User {
@@ -43,15 +10,6 @@ pub struct User {
     pub last_online: time::OffsetDateTime,
     pub status: UserStatus,
     pub bio: Option<String>,
-}
-
-#[derive(Debug, Serialize, sqlx::FromRow)]
-pub struct UserClient {
-    username: String,
-    rank: String,
-    last_online: String,
-    status: UserStatus,
-    bio: Option<String>,
 }
 
 impl User {
@@ -95,13 +53,13 @@ impl User {
         // Zero-Day Specialist
         // Anonymous Member - think about options
 
-        // Could also use network layers as a reference    
+        // Could also use network layers as a reference
     }
 
     pub fn format_last_online(&self) -> String {
         let now = time::OffsetDateTime::now_utc();
         let duration = (now - self.last_online).whole_minutes();
-        
+
         if duration < 1 {
             "Online".to_string()
         } else if duration < 60 {
@@ -124,8 +82,8 @@ impl User {
         )
     }
 
-    pub fn into_user_client(&self) -> UserClient {
-        UserClient {
+    pub fn into_user_info(&self) -> UserInfo {
+        UserInfo {
             username: self.username.clone(),
             rank: self.creation_time_rank().to_string(),
             last_online: self.format_last_online(),

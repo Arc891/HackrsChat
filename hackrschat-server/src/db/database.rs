@@ -1,6 +1,7 @@
 use super::{User, UserStatus};
 use sqlx::{postgres::PgPoolOptions, PgPool};
 
+#[derive(Clone)]
 pub struct Database {
     pool: PgPool,
 }
@@ -11,6 +12,10 @@ impl Database {
         let pool = PgPoolOptions::new()
             .max_connections(5)
             .connect(database_url)
+            .await?;
+
+        sqlx::migrate!("../migrations")
+            .run(&pool)
             .await?;
 
         Ok(Self { pool })

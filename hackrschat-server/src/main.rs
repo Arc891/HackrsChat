@@ -5,19 +5,27 @@ use tokio::{
     sync::broadcast,
 };
 mod db;
-use db::{Database, User, UserClient};
+use db::{Database, User, UserInfo};
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    let db = Database::new(dotenvy::var("DATABASE_URL").unwrap().as_str())
+        .await
+        .context("Failed to connect to database.")?;
+    println!("Connected to database.");
+
     let listener = TcpListener::bind("localhost:8080")
         .await
         .context("Failed to bind.")?;
+    println!("Listening on localhost:8080");
+
     let (tx, _rx) = broadcast::channel(10);
 
     loop {
         let (mut socket, addr) = listener.accept().await.context("Failed to accept.")?;
         let tx = tx.clone();
         let mut rx = tx.subscribe();
+        let db = db.clone();
 
         tokio::spawn(async move {
             println!("Accepted connection from: {}", addr);
@@ -26,10 +34,6 @@ async fn main() -> Result<()> {
 
             let mut reader = BufReader::new(read);
             let mut line = String::new();
-
-            let db = Database::new(dotenv::var("DATABASE_URL").unwrap().as_str())
-                .await
-                .context("Failed to connect to database.")?;
 
             println!("Entering loop...");
 
@@ -98,15 +102,15 @@ async fn handle_db_requests(db: &Database, cmd: &str) -> Result<String> {
                 return Ok("User does not exist.\n".to_string());
             }
             let user = db.get_user_by_username(&username).await?;
-            let user_client = user.into_user_client();
-            format!("{}\n", serde_json::to_string(&user_client).unwrap())
+            let user_info = user.into_user_info();
+            format!("{}\n", serde_json::to_string(&user_info).unwrap())
         }
         cmd if cmd.starts_with("get_users") => {
             if cmd.len() > 9 {
                 return Ok("Invalid command, did you mean 'get_users'?.\n".to_string());
             }
             let users = db.get_users().await?;
-            let users: Vec<UserClient> = users.into_iter().map(|user| user.into_user_client()).collect();
+            let users: Vec<UserInfo> = users.into_iter().map(|user| user.into_user_info()).collect();
             format!("{}\n", serde_json::to_string(&users).unwrap())
         }
         "check_user" => "Please enter a username to check.\n".to_string(),
@@ -132,7 +136,7 @@ mod tests {
     use db::UserStatus;
 
     async fn setup() -> Result<Database> {
-        let db_url = dotenv::var("DATABASE_URL").unwrap();
+        let db_url = dotenvy::var("DATABASE_URL").unwrap();
         let db = Database::new(&db_url).await?;
         Ok(db)
     }

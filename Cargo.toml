@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "hackrschat-common",
     "hackrschat-client",
     "hackrschat-server",
 ]
@@ -7,8 +8,8 @@ resolver = "2"
 
 # These will be the same for both workspace members
 [workspace.package]
-rust-version = "1.80.1"
+rust-version = "1.93"
 edition = "2021"
 version = "0.1.0"
-authors = ["Ezra Hulsman <[info@ezrah.me]>", "Max Gallup <[maxgallup@pm.me]>"]
+authors = ["Arc891 <[info@arc8.dev]>", "Max Gallup <[maxgallup@pm.me]>"]
 repository = "https://github.com/Arc891/HackrsChat"

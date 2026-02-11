@@ -94,3 +94,8 @@ UserClient -- ServerUser
 - [ ] Get JWT working
 - [ ] Get asymmetric encryption working for user to user messages
 - [ ] Research group message encryption
+
+## Environment Notes
+
+- DATABASE_URL: `postgres://postgres:postgres@db:5432/hackrschat` (uses `db` hostname — the compose service name, resolved via Docker's default network DNS)
+- Schema management: sqlx migrations in `migrations/` directory (auto-run on server startup)

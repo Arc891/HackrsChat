@@ -1,4 +1,7 @@
 *target
-*.sqlx
 err.out
 .envrc
+.env
+.vscode/
+**/settings.*.json
+[A-Z_]*.md

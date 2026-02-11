@@ -22,9 +22,8 @@
             ]
         }
     },
-    "capAdd": ["SYS_PTRACE"],
-    "securityOpt": [ "seccomp=unconfined" ],
+    "updateRemoteUserUID": false,
     "forwardPorts": [
-        1111
+        8080
     ]
 }
