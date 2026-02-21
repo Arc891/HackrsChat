@@ -1,11 +1,14 @@
-use anyhow::{Context, Ok, Result};
+use anyhow::{Context, Result};
 use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
     net::TcpListener,
-    sync::broadcast,
 };
 mod db;
-use db::{Database, User, UserInfo};
+use db::Database;
+use hackrschat_common::{
+    codec,
+    protocol::{ErrorCode, Request, Response},
+};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -19,58 +22,66 @@ async fn main() -> Result<()> {
         .context("Failed to bind.")?;
     println!("Listening on localhost:8080");
 
-    let (tx, _rx) = broadcast::channel(10);
-
     loop {
-        let (mut socket, addr) = listener.accept().await.context("Failed to accept.")?;
-        let tx = tx.clone();
-        let mut rx = tx.subscribe();
+        let (socket, addr) = listener.accept().await.context("Failed to accept.")?;
         let db = db.clone();
 
         tokio::spawn(async move {
             println!("Accepted connection from: {}", addr);
 
-            let (read, mut writer) = socket.split();
-
+            let (read, mut writer) = socket.into_split();
             let mut reader = BufReader::new(read);
             let mut line = String::new();
-
-            println!("Entering loop...");
+            let mut clean_disconnect = false;
 
             loop {
-                println!("Waiting for a message...");
-                tokio::select! {
-                    result = reader.read_line(&mut line) => {
-                        if result.is_err() {
-                            println!("Failed to read from socket: {:?}", result.err());
-                            break;
-                        }
-                        if result.unwrap() == 0 {
-                            break;
-                        }
-
-                        let cmd = line.trim();
-                        if cmd == "exit" { break; }
-                        let response = handle_db_requests(&db, cmd).await.context("Failed to handle db requests.")?;
-
-                        println!("Received: '{}' from {}", cmd, addr);
-
-                        tx.send((response, addr)).context("Failed to send message")?;
-                        line.clear();
+                line.clear();
+                match reader.read_line(&mut line).await {
+                    Ok(0) => break,
+                    Err(e) => {
+                        eprintln!("Read error from {}: {}", addr, e);
+                        break;
                     }
-                    result = rx.recv() => {
-                        if result.is_err() { break; }
+                    Ok(_) => {}
+                }
 
-                        let (msg, _recv_addr) = result.unwrap();
-                        // if addr == recv_addr {
-                        println!("Sending: {} to {}", msg, addr);
-                        writer.write_all(&msg.as_bytes()).await.context("Failed to write buf on sock")?;
-                        // }
+                let request = match codec::decode_request(line.trim()) {
+                    Ok(req) => req,
+                    Err(e) => {
+                        let err = Response::Error {
+                            code: ErrorCode::InvalidRequest,
+                            message: e.to_string(),
+                        };
+                        if let Ok(data) = codec::encode_response(&err) {
+                            let _ = writer.write_all(data.as_bytes()).await;
+                        }
+                        continue;
                     }
+                };
+
+                if matches!(request, Request::Disconnect) {
+                    if let Ok(data) = codec::encode_response(&Response::Ok) {
+                        let _ = writer.write_all(data.as_bytes()).await;
+                    }
+                    clean_disconnect = true;
+                    break;
+                }
+
+                let response = handle_request(&db, request).await;
+                let encoded = match codec::encode_response(&response) {
+                    Ok(data) => data,
+                    Err(_) => break,
+                };
+                if writer.write_all(encoded.as_bytes()).await.is_err() {
+                    break;
                 }
             }
-            println!("Connection closed.");
-            Ok(())
+
+            if clean_disconnect {
+                println!("Client disconnected cleanly: {}", addr);
+            } else {
+                println!("Connection lost: {}", addr);
+            }
         });
     }
 
@@ -78,62 +89,59 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn handle_db_requests(db: &Database, cmd: &str) -> Result<String> {
-    let ret = match cmd {
-        "add_user" => "Please enter a user to add.\n".to_string(),
-        cmd if cmd.starts_with("add_user ") => {
-            let username = cmd[9..].to_string();
-            if username.is_empty() {
-                return Ok("Username cannot be empty.\n".to_string());
+async fn handle_request(db: &Database, request: Request) -> Response {
+    match request {
+        Request::CheckUser { username } => match db.check_user_exists(&username).await {
+            Ok(exists) => Response::UserExists { exists },
+            Err(e) => Response::Error {
+                code: ErrorCode::InternalError,
+                message: e.to_string(),
+            },
+        },
+        Request::GetUser { username } => match db.get_user_by_username(&username).await {
+            Ok(user) => Response::UserInfo(user.into_user_info()),
+            Err(e) => {
+                if matches!(e, sqlx::Error::RowNotFound) {
+                    Response::Error {
+                        code: ErrorCode::UserNotFound,
+                        message: format!("User '{}' not found", username),
+                    }
+                } else {
+                    Response::Error {
+                        code: ErrorCode::InternalError,
+                        message: e.to_string(),
+                    }
+                }
             }
-
-            let user = User::new(username, "test".to_string());
-            db.create_user(&user).await?;
-            format!("User added: {:?}\n", user)
-        }
-        "get_user" => "Please enter a username to get.\n".to_string(),
-        cmd if cmd.starts_with("get_user ") => {
-            let username = cmd[9..].to_string();
-            if username.is_empty() {
-                return Ok("Username cannot be empty.\n".to_string());
+        },
+        Request::GetUsers => match db.get_users().await {
+            Ok(users) => {
+                let user_infos = users.into_iter().map(|u| u.into_user_info()).collect();
+                Response::UserList(user_infos)
             }
-
-            if db.check_user_exists(username.as_str()).await? == false {
-                return Ok("User does not exist.\n".to_string());
-            }
-            let user = db.get_user_by_username(&username).await?;
-            let user_info = user.into_user_info();
-            format!("{}\n", serde_json::to_string(&user_info).unwrap())
-        }
-        cmd if cmd.starts_with("get_users") => {
-            if cmd.len() > 9 {
-                return Ok("Invalid command, did you mean 'get_users'?.\n".to_string());
-            }
-            let users = db.get_users().await?;
-            let users: Vec<UserInfo> = users.into_iter().map(|user| user.into_user_info()).collect();
-            format!("{}\n", serde_json::to_string(&users).unwrap())
-        }
-        "check_user" => "Please enter a username to check.\n".to_string(),
-        cmd if cmd.starts_with("check_user ") => {
-            let username = cmd[11..].to_string();
-            if username.is_empty() {
-                return Ok("Username cannot be empty.\n".to_string());
-            }
-
-            format!("{}\n", db.check_user_exists(username.as_str()).await?)
-        }
-        _ => {
-            format!("Unknown command: {}\n", cmd)
-        }
-    };
-
-    Ok(ret)
+            Err(e) => Response::Error {
+                code: ErrorCode::InternalError,
+                message: e.to_string(),
+            },
+        },
+        Request::Register { .. } => Response::RegisterSuccess, // stub — auth phase will add real registration
+        Request::Login { .. } => Response::Error {
+            code: ErrorCode::NotAuthenticated,
+            message: "Not yet implemented".to_string(),
+        },
+        Request::SendMessage { .. } | Request::GetMessages { .. } => Response::Error {
+            code: ErrorCode::NotAuthenticated,
+            message: "Not yet implemented".to_string(),
+        },
+        // Disconnect is handled in the connection loop; this arm satisfies exhaustive match
+        Request::SetStatus { .. } | Request::Disconnect => Response::Ok,
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use db::UserStatus;
+    use db::{User, UserStatus};
 
     async fn setup() -> Result<Database> {
         let db_url = dotenvy::var("DATABASE_URL").unwrap();

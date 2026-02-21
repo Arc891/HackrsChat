@@ -12,6 +12,7 @@ pub struct User {
     pub bio: Option<String>,
 }
 
+#[allow(dead_code)]
 impl User {
     pub fn new(username: String, password_hash: String) -> Self {
         let now = time::OffsetDateTime::now_utc();
